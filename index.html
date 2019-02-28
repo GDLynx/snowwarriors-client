@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Snow Warriors</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        /* general */ 
+        body { 
+            font-style: bold; 
+            font-size: 25px; 
+        }
+
+        /* Utillities */
+
+        .red {
+            color: red;
+        }
+
+        /* layout */
+
+        .grid {
+            display: flex;
+        }
+
+        /* game entities */
+
+        .warrior-button {
+            background-color: cyan;
+            color: blue;
+            width: 4em;
+            height: 4em;
+            margin: 2em 2em 2em 2em;
+            padding: 1em 1em 1em 1em; 
+            font-size: 18px; 
+            font-style: bold; 
+            cursor: pointer; 
+        }
+ 
+        .enemy .enemy-sprite img {
+            cursor: crosshair; 
+            width: 200px;
+            height: 200px;
+        }
+
+        .coin {
+            background-color: cyan;
+            -webkit-clip-path: polygon(52% 89%, 23% 54%, 41% 34%, 52% 24%, 65% 34%, 77% 56%);
+            clip-path: polygon(52% 89%, 23% 54%, 41% 34%, 52% 24%, 65% 34%, 77% 56%);
+            z-index: 100;
+            width: 6em;
+            height: 6em;
+            padding: 1em 1em 1em 1em;
+            cursor: pointer;
+        }
+
+        .players-coins { 
+            color: gold; 
+            font-size: 32px; 
+            font-style: bold; 
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="grid">
+            <div class="players-coins"><b></b></div>
+            <div class="warriors">
+                <div class="yeti warrior-button">
+                    yeti
+                </div>
+                <div class="snow-wizard warrior-button">
+                    snow wizard
+                </div>
+                <div class="snow-angel warrior-button">
+                    snow angel
+                </div>
+                <div class="snow-queen warrior-button">
+                    snow queen
+                </div>
+            </div>
+            <div class="enemy">
+                <div class="enemy-sprite">
+                    <img src="" />
+                </div>
+                <div class="enemy-health">
+                    <b class="red"></b>
+                </div>
+            </div>
+            <!-- ideally the coins should spawn within the same area as the enemy but this was causing a bug -->
+            <div class="coins-area">
+
+            </div>
+        </div>
+    </div>
+    <div class="refresh">
+        <button>Refresh</button>
+        <p><em>This game contains bugs which are "fixable" by refreshing the page</em></p>
+    </div>
+    <script> 
+        window.onload = () => { 
+            // wrap in self invokving anomynous function 
+            /// Setup 
+            let timePerRequest = 3000;
+            // let rootDomain = "http://127.0.0.1:8080"; 
+            // let rootDomain = "https://snowwarriors-xqmrqpjvsz.now.sh";
+
+            let rootDomain = "https://snowwarriors-qkdahulcvk.now.sh";
+            console.log(rootDomain); 
+
+            let taps = 0;
+
+            let clientSideYetis = 0;
+            let clientSideSnowWizards = 0;
+            let clientSideSnowAngels = 0;
+            let clientSideSnowQueens = 0; 
+
+            /// Get Elements 
+            let coinAreaElement = document.querySelectorAll(".coins-area"); 
+            
+            let enemySpriteElement = document.querySelector(".enemy-sprite"); 
+            
+            let yetiElement = document.querySelector(".yeti"); 
+            let snowWizardElement = document.querySelector(".snow-wizard");
+            let snowAngelElement = document.querySelector(".snow-angel");
+            let snowQueenElement = document.querySelector(".snow-queen");
+
+            //// Functions 
+            let removeEnemyHealth = (warrior, url) => { 
+                // ideally "url" should sanitized 
+                if (warrior >= 1) { 
+                    fetch(url.toString()); 
+                    taps += 1; 
+                    if (taps >= 7) {
+                        taps = 0;
+                        location.reload();
+                    }
+                } 
+            }
+
+            // warriors attack (may need to adapt this logic to work so that the work is done on server)
+            window.setInterval(() => { 
+                removeEnemyHealth(clientSideYetis, `${rootDomain}/removeEnemyHealthYeti`)
+            }, 1100);  
+
+            window.setInterval(() => { 
+                removeEnemyHealth(clientSideSnowWizards, `${rootDomain}/removeEnemyHealthSnowWizard`)
+            }, 1200); // 1200 
+            window.setInterval(() => { 
+                removeEnemyHealth(clientSideSnowAngels, `${rootDomain}/removeEnemyHealthSnowAngel`)
+            }, 1500); // 1500
+
+            window.setInterval(() => { 
+                removeEnemyHealth(clientSideSnowQueens, `${rootDomain}/removeEnemyHealthSnowQueen`)
+            }, 2400); //2400 
+
+            document.querySelector(".refresh button")>addEventListener("click", e => location.reload()); 
+
+            enemySpriteElement.addEventListener("click", e => {
+                // fetch(`${rootDomain}/removeHealthOnTap`);
+                fetch(`${rootDomain}/removeHealthOnTap`).then(function(response) {
+                    console.log(response.headers); // returns a Headers{} object
+                }).catch(error => console.log("Error! : " + error));
+                // outputs "Error! : TypeError: Failed to fetch" 
+
+                taps += 1;
+                if (taps >= 7) {
+                    taps = 0;
+                    location.reload();
+                }
+            });
+
+            yetiElement.addEventListener("click", e => { 
+                console.log("Buying yeti"); 
+                fetch(`${rootDomain}/buyYeti`); 
+            }); 
+
+            snowWizardElement.addEventListener("click", e => { 
+                fetch(`${rootDomain}/buySnowWizard`); 
+            }); 
+
+            snowAngelElement.addEventListener("click", e => { 
+                fetch(`${rootDomain}/buySnowAngel`); 
+            }); 
+
+            snowQueenElement.addEventListener("click", e => { 
+                fetch(`${rootDomain}/buySnowQueen`); 
+            }); 
+
+            /// Obtain Updates and Update Client Appropriately 
+            const evtSource = new EventSource(`${rootDomain}/`, { withCredentials: true });
+            /*             
+    
+            evtSource.on('status', function(e) {
+                console.log(e.data);
+            }).on('result', function(e) {
+                var jsonData = JSON.parse(e.data);
+                console.log(e.data, jsonData.url);
+            }).on('error', function() {
+                console.log('ERROR!');
+                evtSource.close()
+            });
+//});   */ 
+
+            evtSource.addEventListener('event', evt => {
+                console.log("event..."); 
+                console.log(evt); 
+                const clientSideGame = JSON.parse(evt.data);
+                enemySpriteElement.querySelector("img").src = clientSideGame.enemy.image;
+                document.querySelector(".enemy-health").querySelector("b").innerText =`${clientSideGame.enemy.name}: ${clientSideGame.enemy.health}`;  
+                
+                /// Player's Warriors 
+                yetiElement.innerText = `yetis: ${clientSideGame.player.warriors.yeti} $100`;  
+                clientSideYetis = Number(clientSideGame.player.warriors.yeti); 
+
+                snowWizardElement.innerText = `snow wizards: ${clientSideGame.player.warriors.snowWizard} $400`;  
+                clientSideSnowWizards = Number(clientSideGame.player.warriors.snowWizard); 
+
+                snowAngelElement.innerText = `snow angels: ${clientSideGame.player.warriors.snowAngel} $1200`;  
+                clientSideSnowAngels = Number(clientSideGame.player.warriors.snowAngel); 
+
+                snowQueenElement.innerText = `snow queens: ${clientSideGame.player.warriors.snowQueen} $3300`;  
+                clientSideSnowQueens = Number(clientSideGame.player.warriors.snowQueen); 
+
+                /// Player's Coins 
+                document.querySelector(".players-coins b").innerText = `$${clientSideGame.player.coins}`; 
+                
+                if (clientSideGame.canDispenseCoins) {
+                    for (let i = 0; i < clientSideGame.player.activeCoins; i++) {
+                        document.querySelector(".coins-area").innerHTML += `<div><b class="coin">1</b></div>`;
+                    }
+                    coinAreaElement.forEach((coin, index) => {
+                        coin.addEventListener("click", e => {
+                            e.target.remove();
+                            fetch(`${rootDomain}/incrementPlayersCoins`); 
+                        }); 
+                    });
+                    window.setTimeout(() => {
+                        document.querySelectorAll(".coin").forEach(coin => {
+                            if (coin) { 
+                                coin.remove(); 
+                            }  
+                        }); 
+                        fetch(`${rootDomain}/removeCoins`); 
+                    }, 4000);
+                } 
+            }, false);
+        } 
+    </script>
+</body>
+</html>
